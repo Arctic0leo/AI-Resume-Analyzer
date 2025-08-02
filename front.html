@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Resume Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background-color: #fef6f0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 800px;
+            margin-top: 80px;
+            background: #fff;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .result-box {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff4dc;
+            border-left: 8px solid #0d6efd;
+            display: none;
+        }
+
+        .dark-mode {
+            background-color: #121212;
+            color: #f1f1f1;
+        }
+
+        .dark-mode .container {
+            background-color: #1e1e1e;
+            color: #f1f1f1;
+        }
+
+        .dark-mode .result-box {
+            background-color: #2a2a2a;
+            border-left-color: #90caf9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-center w-100">Your Friendly Neighbourhood AI Resume Analyzer</h2>
+        <button class="btn btn-outline-dark ms-3" onclick="toggleDarkMode()">
+            <i class="bi bi-moon-stars-fill"></i>
+        </button>
+    </div>
+
+    <form id="resumeForm" enctype="multipart/form-data">
+        <div class="mb-3">
+            <label for="resume" class="form-label">Upload Your Resume (PDF/DOCX)</label>
+            <input class="form-control" type="file" id="resume" name="resume" accept=".pdf, .doc, .docx" required>
+        </div>
+
+        <div class="mb-3">
+            <label for="jdText" class="form-label">Paste Job Description (Optional)</label>
+            <textarea class="form-control" id="jdText" name="jdText" rows="4" placeholder="e.g., Python, Teamwork, Creativity..."></textarea>
+        </div>
+
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary w-100">Analyze Resume</button>
+        </div>
+
+        <div class="progress mb-4 d-none" id="progressBar">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width: 100%">Analyzing...</div>
+        </div>
+    </form>
+
+    <div class="result-box" id="results">
+        <h5>Your Friendly Resume Score: <span id="score">--</span>%</h5>
+        <p><strong>Skill Match:</strong> <span id="match">--</span></p>
+        <p><strong>Suggestions:</strong></p>
+        <ul id="suggestions"></ul>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    function toggleDarkMode() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    document.getElementById('resumeForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const progress = document.getElementById("progressBar");
+        const results = document.getElementById("results");
+
+        progress.classList.remove('d-none');
+        results.style.display = 'none';
+
+        try {
+            const response = await fetch('/analyze', {
+                method: 'POST',
+                body: formData
+            });
+
+            progress.classList.add('d-none');
+
+            if (!response.ok) {
+                alert("An error occurred during resume analysis.");
+                return;
+            }
+
+            const data = await response.json();
+            document.getElementById('score').innerText = data.score;
+            document.getElementById('match').innerText = data.match;
+
+            const suggestionList = document.getElementById('suggestions');
+            suggestionList.innerHTML = '';
+            data.suggestions.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                suggestionList.appendChild(li);
+            });
+
+            results.style.display = 'block';
+
+        } catch (error) {
+            console.error(error);
+            alert("An error occurred: Network response was not ok");
+            progress.classList.add('d-none');
+        }
+    });
+</script>
+</body>
+</html>
